@@ -1,4 +1,9 @@
 #include <Arduino.h>
+#include <Wire.h>
+#include <AllSensors_DLV.h>
+
+AllSensors_DLV elvh_pressure(&Wire, AllSensors_DLV::SensorType::GAUGE, 50.0);
+float elvh_pressure_readings = 0.0;
 
 // pin usage
 const int pin = A0;
@@ -18,13 +23,12 @@ void loop()
   float pressure_in_inH2O = (raw_data - 0.25) / 0.375;  // in inH20 (water inch);
   float pressure_in_mmHg = pressure_in_inH2O * 1.86832; // in mmhg
 
-  // Serial.print(millis() / 1000.0);
-  // Serial.print(", RAW: ");
-  Serial.print(raw_data,2);
+  elvh_pressure.readData();
+  elvh_pressure_readings = elvh_pressure.pressure;
+
+  Serial.print(elvh_pressure_readings,2);
   Serial.print(",");
-  // Serial.print(", PRESSURE: ");
   Serial.println(pressure_in_mmHg, 2);
-  // Serial.println(" mmHg");
 
   delay(500);
 }
