@@ -1,14 +1,20 @@
 import serial  # import Serial Library
-import numpy  # Import numpy
 import csv
+import numpy
+from datetime import datetime
 import matplotlib.pyplot as plt  # import matplotlib library
-import drawnow
+from drawnow import *
 
 
 # Variable declations
 Raw = []
 Pressure = []
 cnt = 0
+
+# datetime object containing current date and time
+now = datetime.now()
+# dd/mm/YY H:M:S
+dt_string = now.strftime("%d%m%Y_%H%M%S")
 
 arduinoData = serial.Serial("com3", 9600)  # Creating our serial object
 
@@ -33,25 +39,26 @@ def makeFig():  # Create a function that makes our desired plot
     plt2.ticklabel_format(useOffset=False)  # Force matplotlib to NOT autoscale y axis
     plt2.legend(loc="upper right")  # plot the legend
 
-
-while True:  # While loop that loops forever
-    while arduinoData.inWaiting() == 0:  # Wait here until there is data
-        pass  # do nothing
-
-    arduinoString = arduinoData.readline()  # read the line of text from the serial port
-    decoded = arduinoString.decode("utf-8")
-    dataArray = decoded.split(",")  # Split it into an array called dataArray
-    P = float(dataArray[0])  # Convert first element to float number and put in pressure
-    R = float(dataArray[1])  # Convert second element to float number and put in P
-
     # saving to a csv file
+with open ('datalog_' + dt_string + '.csv', 'w') as file:
+    writer = csv.writer(file, delimiter=",")
+    writer.writerows(["elvh","lpdr"])
 
+    while True:  # While loop that loops forever
+        while arduinoData.inWaiting() == 0:  # Wait here until there is data
+            pass  # do nothing
 
-    Pressure.append(P)  # Build our Pressure array by appending pressure readings
-    Raw.append(R)  # Building our pressure array by appending P readings
-    drawnow(makeFig)  # Call drawnow to update our live graph
-    plt.pause(0.000001)  # Pause Briefly. Important to keep drawnow from crashing
-    cnt = cnt + 1
-    if cnt > 50:  # If you have 50 or more points, delete the first one from the array
-        Pressure.pop(0)  # This allows us to just see the last 50 data points
-        Raw.pop(0)
+        arduinoString = arduinoData.readline()  # read the line of text from the serial port
+        decoded = arduinoString.decode("utf-8")
+        dataArray = decoded.split(",")  # Split it into an array called dataArray
+        P = float(dataArray[0])  # Convert first element to float number and put in pressure
+        R = float(dataArray[1])  # Convert second element to float number and put in P
+        writer.writerow([dataArray[0], dataArray[1]]) # write to csv
+        Pressure.append(P)  # Build our Pressure array by appending pressure readings
+        Raw.append(R)  # Building our pressure array by appending P readings
+        drawnow(makeFig)  # Call drawnow to update our live graph
+        plt.pause(0.000001)  # Pause Briefly. Important to keep drawnow from crashing
+        cnt = cnt + 1
+        if cnt > 50:  # If you have 50 or more points, delete the first one from the array
+            Pressure.pop(0)  # This allows us to just see the last 50 data points
+            Raw.pop(0)
